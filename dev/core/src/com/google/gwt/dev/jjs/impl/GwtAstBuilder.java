@@ -1301,21 +1301,15 @@ public class GwtAstBuilder {
 
       // and add any locals that were storing captured outer variables as arguments to the call
       // first
-      int samArg = 0;
       for (JField localField : locals) {
-        JType samArgumentType = lambdaMethod.getParams().get(samArg).getType();
-        JExpression capture = new JFieldRef(info, new JThisRef(info, innerLambdaClass),
-            localField, innerLambdaClass);
-        samCall.addArg(maybeInsertCasts(capture, samArgumentType));
-        samArg++;
+        samCall.addArg(new JFieldRef(info, new JThisRef(info, innerLambdaClass),
+            localField, innerLambdaClass));
       }
 
       // and now we propagate the rest of the actual interface method parameters on the end
       // (e.g. ClickEvent e)
       for (JParameter param : samMethod.getParams()) {
-        JType samArgumentType = lambdaMethod.getParams().get(samArg).getType();
-        samCall.addArg(maybeInsertCasts(param.makeRef(info), samArgumentType));
-        samArg++;
+        samCall.addArg(param.makeRef(info));
       }
 
       // we either add a return statement, or don't, depending on what the interface wants
@@ -1938,12 +1932,12 @@ public class GwtAstBuilder {
             || !referredMethodBinding.isVarargs()
             || (paramNumber < varArg)) {
           destParam = referredMethodBinding.parameters[paramNumber];
-          paramExpr = maybeInsertCasts(paramExpr, samParameterBinding, destParam);
+          paramExpr = boxOrUnboxExpression(paramExpr, samParameterBinding, destParam);
           samCall.addArg(paramExpr);
         } else if (!samParameterBinding.isArrayType()) {
           // else add trailing parameters to var-args initializer list for an array
           destParam = referredMethodBinding.parameters[varArg].leafComponentType();
-          paramExpr = maybeInsertCasts(paramExpr, samParameterBinding, destParam);
+          paramExpr = boxOrUnboxExpression(paramExpr, samParameterBinding, destParam);
           varArgInitializers.add(paramExpr);
         }
         paramNumber++;
@@ -1962,7 +1956,7 @@ public class GwtAstBuilder {
       // TODO(rluble): Make this a call to JjsUtils.makeMethodEndStatement once boxing/unboxing
       // is handled there.
       if (samMethod.getType() != JPrimitiveType.VOID) {
-        JExpression samExpression = maybeInsertCasts(samCall, referredMethodBinding.returnType,
+        JExpression samExpression = boxOrUnboxExpression(samCall, referredMethodBinding.returnType,
             declarationSamBinding.returnType);
         samMethodBody.getBlock().addStmt(maybeBoxOrUnbox(samExpression, x).makeReturnStatement());
       } else {
@@ -2003,10 +1997,7 @@ public class GwtAstBuilder {
       push(allocLambda);
     }
 
-    /**
-     * Inserts necessary casts for boxing, unboxing or erasure reasons if needed.
-     */
-    private JExpression maybeInsertCasts(JExpression expr, TypeBinding fromType,
+    private JExpression boxOrUnboxExpression(JExpression expr, TypeBinding fromType,
         TypeBinding toType) {
       if (fromType == TypeBinding.VOID || toType == TypeBinding.VOID) {
         return expr;
@@ -2025,16 +2016,6 @@ public class GwtAstBuilder {
         return expr;
       }
       return new JCastOperation(expr.getSourceInfo(), typeMap.get(castToType), expr);
-    }
-
-    /**
-     * Inserts necessary casts for boxing, unboxing or erasure reasons if needed.
-     */
-    private JExpression maybeInsertCasts(JExpression expr, JType toType) {
-      if (expr.getType() == toType) {
-        return expr;
-      }
-      return new JCastOperation(expr.getSourceInfo(), toType, expr);
     }
 
     @Override
