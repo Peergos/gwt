@@ -88,7 +88,12 @@ public final class System {
         }
       }
     } else if (len > 0) {
-      nativeArraycopy(src, srcOfs, dest, destOfs, len);
+      if (srcComp.compoundName.equals("Byte") || srcComp.compoundName.equals("byte")) {
+      	nativeArraycopy(src, srcOfs, dest, destOfs, len);
+      } else {
+        ArrayHelper.copy(src, srcOfs, dest, destOfs, len);
+      }
+
     }
   }
 

@@ -142,7 +142,18 @@ public final class String implements Comparable<String>, CharSequence,
 
   public static String valueOf(char x[], int offset, int count) {
     int end = offset + count;
-    return valueOfInternal(x, offset, end);
+    checkCriticalStringBounds(offset, end, x.length);
+    // Work around function.prototype.apply call stack size limits:
+    // https://code.google.com/p/v8/issues/detail?id=2896
+    // Performance: http://jsperf.com/string-fromcharcode-test/13
+    int batchSize = ArrayHelper.ARRAY_PROCESS_BATCH_SIZE;
+    String s = "";
+    for (int batchStart = offset; batchStart < end;) {
+      int batchEnd = Math.min(batchStart + batchSize, end);
+      s += fromCharCode(ArrayHelper.unsafeClone(x, batchStart, batchEnd));
+      batchStart = batchEnd;
+    }
+    return s;
   }
 
   private static native String valueOfInternal(char x[], int start, int end) /*-{

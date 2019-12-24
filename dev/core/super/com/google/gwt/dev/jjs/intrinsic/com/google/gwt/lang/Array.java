@@ -244,18 +244,8 @@ public final class Array {
     if (TypedArrays.isSupported()) {
       //have to keep this as Object since dynamicCast will notice that the class hasn't been set yet
       Object result = null;
-      if (arrayClass.compoundName.equals("Integer") || arrayClass.compoundName.equals("int")) {
-        result = TypedArrays.createInt32Array(length);
-      } else if (arrayClass.compoundName.equals("Double") || arrayClass.compoundName.equals("double")) {
-        result = TypedArrays.createFloat64Array(length);
-      } else if (arrayClass.compoundName.equals("Float") || arrayClass.compoundName.equals("float")) {
-        result = TypedArrays.createFloat32Array(length);
-      } else if (arrayClass.compoundName.equals("Short") || arrayClass.compoundName.equals("short")) {
-        result = TypedArrays.createInt16Array(length);
-      } else if (arrayClass.compoundName.equals("Byte") || arrayClass.compoundName.equals("byte")) {
+      if (arrayClass.compoundName.equals("Byte") || arrayClass.compoundName.equals("byte")) {
         result = TypedArrays.createInt8Array(length);
-      } else if (arrayClass.compoundName.equals("Char") || arrayClass.compoundName.equals("char")) {
-        result = TypedArrays.createUint16Array(length);
       }
       if (result != null) {
         return result;

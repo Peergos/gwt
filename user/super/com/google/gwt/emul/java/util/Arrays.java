@@ -510,7 +510,7 @@ public class Arrays {
 
   public static byte[] copyOf(byte[] original, int newLength) {
     checkArraySize(newLength);
-    return copyPrimitiveArray(original, new byte[newLength], 0, newLength);
+    return copyPrimitiveByteArray(original, new byte[newLength], 0, newLength);
   }
 
   public static char[] copyOf(char[] original, int newLength) {
@@ -555,7 +555,7 @@ public class Arrays {
 
   public static byte[] copyOfRange(byte[] original, int from, int to) {
     checkCopyOfRange(original, from, to);
-    return copyPrimitiveArray(original, new byte[to - from], from, to);
+    return copyPrimitiveByteArray(original, new byte[to - from], from, to);
   }
 
   public static char[] copyOfRange(char[] original, int from, int to) {
@@ -594,6 +594,15 @@ public class Arrays {
   }
 
   private static <T> T copyPrimitiveArray(T original, T copy, int from, int to) {
+    int len = ArrayHelper.getLength(original);
+    int copyLen = Math.min(to, len) - from;
+    ArrayHelper.copy(original, from, copy, 0, copyLen);
+
+    nativeArraycopy(original, from, copy, 0, copyLen);
+    return copy;
+  }
+
+  private static <T> T copyPrimitiveByteArray(T original, T copy, int from, int to) {
     int len = ArrayHelper.getLength(original);
     int copyLen = Math.min(to, len) - from;
     nativeArraycopy(original, from, copy, 0, copyLen);
@@ -1244,7 +1253,7 @@ public class Arrays {
 
   public static void sort(char[] array, int fromIndex, int toIndex) {
     checkCriticalArrayBounds(fromIndex, toIndex, array.length);
-    numberSort(array, fromIndex, toIndex);
+    nativeIntegerSort(array, fromIndex, toIndex);
   }
 
   public static void sort(double[] array) {
@@ -1253,7 +1262,7 @@ public class Arrays {
 
   public static void sort(double[] array, int fromIndex, int toIndex) {
     checkCriticalArrayBounds(fromIndex, toIndex, array.length);
-    numberSort(array, fromIndex, toIndex);
+    nativeSort(array, fromIndex, toIndex, getDoubleComparator());
   }
 
   public static void sort(float[] array) {
@@ -1262,7 +1271,7 @@ public class Arrays {
 
   public static void sort(float[] array, int fromIndex, int toIndex) {
     checkCriticalArrayBounds(fromIndex, toIndex, array.length);
-    numberSort(array, fromIndex, toIndex);
+    nativeSort(array, fromIndex, toIndex, getDoubleComparator());
   }
 
   public static void sort(int[] array) {
@@ -1271,7 +1280,7 @@ public class Arrays {
 
   public static void sort(int[] array, int fromIndex, int toIndex) {
     checkCriticalArrayBounds(fromIndex, toIndex, array.length);
-    numberSort(array, fromIndex, toIndex);
+    nativeIntegerSort(array, fromIndex, toIndex);
   }
 
   public static void sort(long[] array) {
@@ -1297,7 +1306,7 @@ public class Arrays {
 
   public static void sort(short[] array, int fromIndex, int toIndex) {
     checkCriticalArrayBounds(fromIndex, toIndex, array.length);
-    numberSort(array, fromIndex, toIndex);
+    nativeIntegerSort(array, fromIndex, toIndex);
   }
 
   /**
