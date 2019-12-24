@@ -18,7 +18,10 @@
 <!-- Types from this module are not visible to nor imported into user code. -->
 <!--                                                                        -->
 <module>
+  
   <inherits name="com.google.gwt.lang.LongLib"/>
+  <inherits name="com.google.gwt.typedarrays.TypedArrays"/>
+
   <super-source/>
   <public path="public" />
 </module>

@@ -139,21 +139,18 @@ public final class String implements Comparable<String>, CharSequence,
     return NativeString.fromCharCode(x);
   }
 
+
   public static String valueOf(char x[], int offset, int count) {
     int end = offset + count;
-    checkCriticalStringBounds(offset, end, x.length);
-    // Work around function.prototype.apply call stack size limits:
-    // https://code.google.com/p/v8/issues/detail?id=2896
-    // Performance: http://jsperf.com/string-fromcharcode-test/13
-    int batchSize = ArrayHelper.ARRAY_PROCESS_BATCH_SIZE;
-    String s = "";
-    for (int batchStart = offset; batchStart < end;) {
-      int batchEnd = Math.min(batchStart + batchSize, end);
-      s += fromCharCode(ArrayHelper.unsafeClone(x, batchStart, batchEnd));
-      batchStart = batchEnd;
-    }
-    return s;
+    return valueOfInternal(x, offset, end);
   }
+
+  private static native String valueOfInternal(char x[], int start, int end) /*-{
+    // Trick: fromCharCode is a vararg method, so we can use apply() to pass the
+    // entire input in one shot.
+    x = Array.prototype.slice.call(x, start, end);
+    return String.fromCharCode.apply(null, x);
+  }-*/;
 
   private static String fromCharCode(Object[] array) {
     return getFromCharCodeFunction().apply(null, array);

@@ -295,7 +295,7 @@ public final class Class<T> implements Type {
 
   private String packageName;
 
-  private String compoundName;
+  public String compoundName;
 
   private JavaScriptObject typeId;
 

@@ -22,6 +22,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 
 import javaemul.internal.annotations.DoNotInline;
 import javaemul.internal.annotations.HasNoSideEffects;
+import com.google.gwt.typedarrays.shared.TypedArrays;
 
 /**
  * This is an intrinsic class that contains the implementation details for Java arrays. <p>
@@ -86,7 +87,7 @@ public final class Array {
   public static Object initUnidimensionalArray(Class<?> leafClassLiteral,
       JavaScriptObject castableTypeMap, JavaScriptObject elementTypeId, int length,
       int elementTypeCategory, int dimensions) {
-    Object result = initializeArrayElementsWithDefaults(elementTypeCategory, length);
+    Object result = initializeArrayElementsWithDefaults(leafClassLiteral, elementTypeCategory, length);
     if (elementTypeCategory != TYPE_JS_UNKNOWN_NATIVE) {
       stampJavaTypeInfo(getClassLiteralForArray(leafClassLiteral, dimensions), castableTypeMap,
           elementTypeId, elementTypeCategory, result);
@@ -213,7 +214,7 @@ public final class Array {
   /**
    * Creates a primitive JSON array of a given the element type class.
    */
-  private static native Object initializeArrayElementsWithDefaults(
+  private static native Object initializeArrayElementsWithDefaultsOrig(
       int elementTypeCategory, int length) /*-{
     var array = new Array(length);
     var initValue;
@@ -237,6 +238,32 @@ public final class Array {
     return array;
   }-*/;
 
+  private static Object initializeArrayElementsWithDefaults(
+      Class<?> arrayClass, int elementTypeCategory, int length) {
+      
+    if (TypedArrays.isSupported()) {
+      //have to keep this as Object since dynamicCast will notice that the class hasn't been set yet
+      Object result = null;
+      if (arrayClass.compoundName.equals("Integer") || arrayClass.compoundName.equals("int")) {
+        result = TypedArrays.createInt32Array(length);
+      } else if (arrayClass.compoundName.equals("Double") || arrayClass.compoundName.equals("double")) {
+        result = TypedArrays.createFloat64Array(length);
+      } else if (arrayClass.compoundName.equals("Float") || arrayClass.compoundName.equals("float")) {
+        result = TypedArrays.createFloat32Array(length);
+      } else if (arrayClass.compoundName.equals("Short") || arrayClass.compoundName.equals("short")) {
+        result = TypedArrays.createInt16Array(length);
+      } else if (arrayClass.compoundName.equals("Byte") || arrayClass.compoundName.equals("byte")) {
+        result = TypedArrays.createInt8Array(length);
+      } else if (arrayClass.compoundName.equals("Char") || arrayClass.compoundName.equals("char")) {
+        result = TypedArrays.createUint16Array(length);
+      }
+      if (result != null) {
+        return result;
+      }
+    }
+    return initializeArrayElementsWithDefaultsOrig(elementTypeCategory, length);
+  }
+  
   private static Object initMultidimensionalArray(Class<?> leafClassLiteral,
       JavaScriptObject[] castableTypeMapExprs, JavaScriptObject[] elementTypeIds,
       int leafElementTypeCategory, int[] dimExprs, int index, int count) {
@@ -245,7 +272,7 @@ public final class Array {
     // All dimensions but the last are plain reference types.
     int elementTypeCategory = isLastDimension ? leafElementTypeCategory : TYPE_JAVA_OBJECT;
 
-    Object result = initializeArrayElementsWithDefaults(elementTypeCategory, length);
+    Object result = initializeArrayElementsWithDefaults(leafClassLiteral, elementTypeCategory, length);
     if (leafElementTypeCategory != TYPE_JS_UNKNOWN_NATIVE) {
       stampJavaTypeInfo(getClassLiteralForArray(leafClassLiteral, count - index),
           castableTypeMapExprs[index], elementTypeIds[index], elementTypeCategory, result);

@@ -88,9 +88,27 @@ public final class System {
         }
       }
     } else if (len > 0) {
-      ArrayHelper.copy(src, srcOfs, dest, destOfs, len);
+      nativeArraycopy(src, srcOfs, dest, destOfs, len);
     }
   }
+
+  /**
+   * Copy an array using native Javascript. The destination array must be a real
+   * Java array (ie, already has the GWT type info on it). No error checking is
+   * performed -- the caller is expected to have verified everything first.
+   *
+   * @param src source array for copy
+   * @param srcOfs offset into source array
+   * @param dest destination array for copy
+   * @param destOfs offset into destination array
+   * @param len number of elements to copy
+   */
+  private static native void nativeArraycopy(Object src, int srcOfs, Object dest, int destOfs,
+      int len) /*-{
+    //Array.prototype.splice.apply(dest, [destOfs, len].concat(Array.prototype.slice.call(src, srcOfs, srcOfs + len)));
+    dest.set(src.slice(srcOfs, srcOfs + len), destOfs);
+  }-*/;
+
 
   public static long currentTimeMillis() {
     return (long) JsUtils.getTime();

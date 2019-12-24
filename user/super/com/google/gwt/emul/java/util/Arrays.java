@@ -43,6 +43,7 @@ import javaemul.internal.ArrayHelper;
 import javaemul.internal.JsUtils;
 import javaemul.internal.NativeArray.CompareFunction;
 import jsinterop.annotations.JsFunction;
+import com.google.gwt.typedarrays.shared.TypedArrays;
 
 /**
  * Utility methods related to native arrays.
@@ -595,10 +596,16 @@ public class Arrays {
   private static <T> T copyPrimitiveArray(T original, T copy, int from, int to) {
     int len = ArrayHelper.getLength(original);
     int copyLen = Math.min(to, len) - from;
-    ArrayHelper.copy(original, from, copy, 0, copyLen);
+    nativeArraycopy(original, from, copy, 0, copyLen);
     return copy;
   }
 
+  private static native void nativeArraycopy(Object src, int srcOfs, Object dest, int destOfs,
+      int len) /*-{
+    //Array.prototype.splice.apply(dest, [destOfs, len].concat(Array.prototype.slice.call(src, srcOfs, srcOfs + len)));
+    dest.set(src.slice(srcOfs, srcOfs + len), destOfs);
+  }-*/;
+  
   private static <T> T[] copyObjectArray(T[] original, int from, int to) {
     T[] copy = ArrayHelper.clone(original, from, to);
     ArrayHelper.setLength(copy, to - from);
@@ -1228,7 +1235,7 @@ public class Arrays {
 
   public static void sort(byte[] array, int fromIndex, int toIndex) {
     checkCriticalArrayBounds(fromIndex, toIndex, array.length);
-    nativeIntegerSort(array, fromIndex, toIndex);
+    numberSort(array, fromIndex, toIndex);
   }
 
   public static void sort(char[] array) {
@@ -1237,7 +1244,7 @@ public class Arrays {
 
   public static void sort(char[] array, int fromIndex, int toIndex) {
     checkCriticalArrayBounds(fromIndex, toIndex, array.length);
-    nativeIntegerSort(array, fromIndex, toIndex);
+    numberSort(array, fromIndex, toIndex);
   }
 
   public static void sort(double[] array) {
@@ -1246,7 +1253,7 @@ public class Arrays {
 
   public static void sort(double[] array, int fromIndex, int toIndex) {
     checkCriticalArrayBounds(fromIndex, toIndex, array.length);
-    nativeSort(array, fromIndex, toIndex, getDoubleComparator());
+    numberSort(array, fromIndex, toIndex);
   }
 
   public static void sort(float[] array) {
@@ -1255,7 +1262,7 @@ public class Arrays {
 
   public static void sort(float[] array, int fromIndex, int toIndex) {
     checkCriticalArrayBounds(fromIndex, toIndex, array.length);
-    nativeSort(array, fromIndex, toIndex, getDoubleComparator());
+    numberSort(array, fromIndex, toIndex);
   }
 
   public static void sort(int[] array) {
@@ -1264,7 +1271,7 @@ public class Arrays {
 
   public static void sort(int[] array, int fromIndex, int toIndex) {
     checkCriticalArrayBounds(fromIndex, toIndex, array.length);
-    nativeIntegerSort(array, fromIndex, toIndex);
+    numberSort(array, fromIndex, toIndex);
   }
 
   public static void sort(long[] array) {
@@ -1290,8 +1297,29 @@ public class Arrays {
 
   public static void sort(short[] array, int fromIndex, int toIndex) {
     checkCriticalArrayBounds(fromIndex, toIndex, array.length);
-    nativeIntegerSort(array, fromIndex, toIndex);
+    numberSort(array, fromIndex, toIndex);
   }
+
+  /**
+   * Sort a subset of an array of number primitives
+   */
+  private static void numberSort(Object array, int fromIndex, int toIndex) {
+    if (TypedArrays.isSupported()) {
+      nativeTypedArraySort(array, fromIndex, toIndex);
+    } else {
+      //KEV nativeNumberSort(array, fromIndex, toIndex);
+    }
+  }
+	
+  /**
+   * Sort a subset of a typed array.
+   */
+  private static native void nativeTypedArraySort(Object array, int fromIndex,
+      int toIndex) /*-{
+    Array.prototype.sort.call(array.subarray(fromIndex, toIndex), function(a, b) {
+      return a - b;
+    });	
+  }-*/;
 
   public static <T> void sort(T[] x, Comparator<? super T> c) {
     mergeSort(x, 0, x.length, c);
