@@ -87,7 +87,7 @@ public final class Array {
   public static Object initUnidimensionalArray(Class<?> leafClassLiteral,
       JavaScriptObject castableTypeMap, JavaScriptObject elementTypeId, int length,
       int elementTypeCategory, int dimensions) {
-    Object result = initializeArrayElementsWithDefaults(leafClassLiteral, elementTypeCategory, length);
+    Object result = initializeArrayElementsWithDefaults(elementTypeCategory!=TYPE_JAVA_OBJECT, leafClassLiteral, elementTypeCategory, length);
     if (elementTypeCategory != TYPE_JS_UNKNOWN_NATIVE) {
       stampJavaTypeInfo(getClassLiteralForArray(leafClassLiteral, dimensions), castableTypeMap,
           elementTypeId, elementTypeCategory, result);
@@ -238,10 +238,10 @@ public final class Array {
     return array;
   }-*/;
 
-  private static Object initializeArrayElementsWithDefaults(
+  private static Object initializeArrayElementsWithDefaults(boolean isLastDimension,
       Class<?> arrayClass, int elementTypeCategory, int length) {
       
-    if (TypedArrays.isSupported()) {
+    if (isLastDimension && TypedArrays.isSupported()) {
       //have to keep this as Object since dynamicCast will notice that the class hasn't been set yet
       Object result = null;
       if (arrayClass.compoundName.equals("Byte") || arrayClass.compoundName.equals("byte")) {
@@ -262,7 +262,7 @@ public final class Array {
     // All dimensions but the last are plain reference types.
     int elementTypeCategory = isLastDimension ? leafElementTypeCategory : TYPE_JAVA_OBJECT;
 
-    Object result = initializeArrayElementsWithDefaults(leafClassLiteral, elementTypeCategory, length);
+    Object result = initializeArrayElementsWithDefaults(isLastDimension, leafClassLiteral, elementTypeCategory, length);
     if (leafElementTypeCategory != TYPE_JS_UNKNOWN_NATIVE) {
       stampJavaTypeInfo(getClassLiteralForArray(leafClassLiteral, count - index),
           castableTypeMapExprs[index], elementTypeIds[index], elementTypeCategory, result);
