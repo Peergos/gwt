@@ -597,8 +597,6 @@ public class Arrays {
     int len = ArrayHelper.getLength(original);
     int copyLen = Math.min(to, len) - from;
     ArrayHelper.copy(original, from, copy, 0, copyLen);
-
-    nativeArraycopy(original, from, copy, 0, copyLen);
     return copy;
   }
 
