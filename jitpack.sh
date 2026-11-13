@@ -24,7 +24,18 @@ for jar in gwt-user gwt-dev gwt-codeserver gwt-servlet gwt-servlet-deps; do
       -DartifactId="$jar" -Dversion="$VERSION" -Dpackaging=jar -DgeneratePom=true
 done
 
-# JitPack publishes the poms it finds in the build directory in preference to ~/.m2, and GWT's
-# templates and ant's bundled poms would otherwise stand in for the jars installed above.
+# JitPack takes the artifacts to publish from the poms in the build directory, so only ours may
+# be left there: GWT's templates and ant's bundled poms would stand in for them.
 rm -rf "$work"
 find . -name "*pom*.xml" -delete
+for jar in gwt-user gwt-dev gwt-codeserver gwt-servlet gwt-servlet-deps; do
+  mkdir -p "build/poms/$jar"
+  cat > "build/poms/$jar/pom.xml" <<POM
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>$GROUP.$ARTIFACT</groupId>
+  <artifactId>$jar</artifactId>
+  <version>$VERSION</version>
+</project>
+POM
+done
