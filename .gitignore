@@ -9,3 +9,6 @@
 
 # Maven build directories for samples
 samples/**/target/
+
+# Ant and gwt-tools fetched by jitpack.sh
+/.jitpack/
