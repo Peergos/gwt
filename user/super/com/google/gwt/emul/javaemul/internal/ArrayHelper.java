@@ -65,10 +65,6 @@ public final class ArrayHelper {
     asNativeArray(array).push(o);
   }
 
-  public static void push(byte[] array, byte o) {
-    asNativeArray(array).push(o);
-  }
-
   /**
    * Sets an element of an array.
    *
@@ -104,6 +100,12 @@ public final class ArrayHelper {
       return;
     }
 
+    if (isTypedArray(dest)) {
+      // Peergos: byte[] is an Int8Array, which has a fixed length and no splice.
+      copyToTypedArray(src, srcOfs, dest, destOfs, len);
+      return;
+    }
+
     /*
      * Array.prototype.splice is not used directly to overcome the limits imposed to the number of
      * function parameters by browsers.
@@ -126,6 +128,15 @@ public final class ArrayHelper {
       destOfs += len;
     }
   }
+
+  @JsMethod(name = "ArrayBuffer.isView", namespace = "<window>")
+  private static native boolean isTypedArray(Object o);
+
+  private static native void copyToTypedArray(
+      Object src, int srcOfs, Object dest, int destOfs, int len) /*-{
+    dest.set(ArrayBuffer.isView(src) ? src.subarray(srcOfs, srcOfs + len)
+        : src.slice(srcOfs, srcOfs + len), destOfs);
+  }-*/;
 
   @JsType(isNative = true, name = "Function", namespace = "<window>")
   private static class NativeFunction {

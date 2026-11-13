@@ -1447,21 +1447,17 @@ public class GwtAstBuilder {
 
       // and add any locals that were storing captured outer variables as arguments to the call
       // first
-      int samArg = 0;
+      // Peergos: no erasure casts on lambda arguments, so that JS values passed into Java lambdas
+      // (e.g. a JS number where an Integer is declared) are not rejected. Reverts 62e0d9a92.
       for (JField localField : locals) {
-        JType samArgumentType = lambdaMethod.getParams().get(samArg).getType();
-        JExpression capture = new JFieldRef(info, new JThisRef(info, innerLambdaClass),
-            localField, innerLambdaClass);
-        samCall.addArg(maybeInsertCasts(capture, samArgumentType));
-        samArg++;
+        samCall.addArg(new JFieldRef(info, new JThisRef(info, innerLambdaClass),
+            localField, innerLambdaClass));
       }
 
       // and now we propagate the rest of the actual interface method parameters on the end
       // (e.g. ClickEvent e)
       for (JParameter param : samMethod.getParams()) {
-        JType samArgumentType = lambdaMethod.getParams().get(samArg).getType();
-        samCall.addArg(maybeInsertCasts(param.makeRef(info), samArgumentType));
-        samArg++;
+        samCall.addArg(param.makeRef(info));
       }
 
       // we either add a return statement, or don't, depending on what the interface wants
@@ -2175,16 +2171,6 @@ public class GwtAstBuilder {
         return expr;
       }
       return new JCastOperation(expr.getSourceInfo(), typeMap.get(castToType), expr);
-    }
-
-    /**
-     * Inserts necessary casts for boxing, unboxing or erasure reasons if needed.
-     */
-    private JExpression maybeInsertCasts(JExpression expr, JType toType) {
-      if (expr.getType() == toType) {
-        return expr;
-      }
-      return new JCastOperation(expr.getSourceInfo(), toType, expr);
     }
 
     @Override

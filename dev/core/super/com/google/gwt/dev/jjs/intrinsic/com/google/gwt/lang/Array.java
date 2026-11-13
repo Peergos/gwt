@@ -86,7 +86,7 @@ public final class Array {
   public static Object initUnidimensionalArray(Class<?> leafClassLiteral,
       JavaScriptObject castableTypeMap, JavaScriptObject elementTypeId, int length,
       int elementTypeCategory, int dimensions) {
-    Object result = initializeArrayElementsWithDefaults(elementTypeCategory, length);
+    Object result = initializeArrayElementsWithDefaults(leafClassLiteral, elementTypeCategory, length);
     if (elementTypeCategory != TYPE_JS_UNKNOWN_NATIVE) {
       stampJavaTypeInfo(getClassLiteralForArray(leafClassLiteral, dimensions), castableTypeMap,
           elementTypeId, elementTypeCategory, result);
@@ -213,6 +213,20 @@ public final class Array {
   /**
    * Creates a primitive JSON array of a given the element type class.
    */
+  // Peergos: byte[] is an Int8Array, so byte arrays pass to and from JS (crypto, network, files)
+  // without copying.
+  private static Object initializeArrayElementsWithDefaults(
+      Class<?> leafClassLiteral, int elementTypeCategory, int length) {
+    if (elementTypeCategory == TYPE_PRIMITIVE_NUMBER && leafClassLiteral == byte.class) {
+      return newInt8Array(length);
+    }
+    return initializeArrayElementsWithDefaults(elementTypeCategory, length);
+  }
+
+  private static native Object newInt8Array(int length) /*-{
+    return new Int8Array(length);
+  }-*/;
+
   private static native Object initializeArrayElementsWithDefaults(
       int elementTypeCategory, int length) /*-{
     var array = new Array(length);
@@ -245,7 +259,7 @@ public final class Array {
     // All dimensions but the last are plain reference types.
     int elementTypeCategory = isLastDimension ? leafElementTypeCategory : TYPE_JAVA_OBJECT;
 
-    Object result = initializeArrayElementsWithDefaults(elementTypeCategory, length);
+    Object result = initializeArrayElementsWithDefaults(leafClassLiteral, elementTypeCategory, length);
     if (leafElementTypeCategory != TYPE_JS_UNKNOWN_NATIVE) {
       stampJavaTypeInfo(getClassLiteralForArray(leafClassLiteral, count - index),
           castableTypeMapExprs[index], elementTypeIds[index], elementTypeCategory, result);
