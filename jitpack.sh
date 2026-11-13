@@ -23,3 +23,8 @@ for jar in gwt-user gwt-dev gwt-codeserver gwt-servlet gwt-servlet-deps; do
   mvn -B -q install:install-file -Dfile="build/lib/$jar.jar" -DgroupId="$GROUP.$ARTIFACT" \
       -DartifactId="$jar" -Dversion="$VERSION" -Dpackaging=jar -DgeneratePom=true
 done
+
+# JitPack publishes the poms it finds in the build directory in preference to ~/.m2, and GWT's
+# templates and ant's bundled poms would otherwise stand in for the jars installed above.
+rm -rf "$work"
+find . -name "*pom*.xml" -delete
